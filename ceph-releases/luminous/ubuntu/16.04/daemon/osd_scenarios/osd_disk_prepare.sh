@@ -45,34 +45,29 @@ function osd_disk_prepare {
     fi
   fi
 
+  if [[ ${OSD_DMCRYPT} -eq 1 ]]; then
+    CLI_OPTS+=("--dmcrypt --lockbox-uuid ${OSD_LOCKBOX_UUID}")
+  fi
   if [[ ${OSD_BLUESTORE} -eq 1 ]]; then
-    ceph-disk -v prepare "${CLI_OPTS[@]}" --bluestore \
+    CLI_OPTS+=(--bluestore)
+    ceph-disk -v prepare "${CLI_OPTS[@]}" \
     --block.wal "${OSD_BLUESTORE_BLOCK_WAL}" \
     --block.wal-uuid "${OSD_BLUESTORE_BLOCK_WAL_UUID}" \
     --block.db "${OSD_BLUESTORE_BLOCK_DB}" \
     --block.db-uuid "${OSD_BLUESTORE_BLOCK_DB_UUID}" \
     --block-uuid "${OSD_BLUESTORE_BLOCK_UUID}" \
     "${OSD_DEVICE}"
-  elif [[ ${OSD_DMCRYPT} -eq 1 ]]; then
-    get_admin_key
-    check_admin_key
-    # the admin key must be present on the node
-    # in order to store the encrypted key in the monitor's k/v store
+  elif [[ "${OSD_FILESTORE}" -eq 1 ]]; then
+    CLI_OPTS+=(--filestore)
     if [[ -n "${OSD_JOURNAL}" ]]; then
-      ceph-disk -v prepare "${CLI_OPTS[@]}" --journal-uuid "${OSD_JOURNAL_UUID}" --lockbox-uuid "${OSD_LOCKBOX_UUID}" --dmcrypt "${OSD_DEVICE}" "${OSD_JOURNAL}"
+      ceph-disk -v prepare "${CLI_OPTS[@]}" --journal-uuid "${OSD_JOURNAL_UUID}" "${OSD_DEVICE}" "${OSD_JOURNAL}"
     else
-      ceph-disk -v prepare "${CLI_OPTS[@]}" --journal-uuid "${OSD_JOURNAL_UUID}" --lockbox-uuid "${OSD_LOCKBOX_UUID}" --dmcrypt "${OSD_DEVICE}"
+      ceph-disk -v prepare "${CLI_OPTS[@]}" --journal-uuid "${OSD_JOURNAL_UUID}" "${OSD_DEVICE}"
     fi
-    echo "Unmounting LOCKBOX directory"
-    # NOTE(leseb): adding || true so when this bug will be fixed the entrypoint will not fail
-    # Ceph bug tracker: http://tracker.ceph.com/issues/18944
-    DATA_UUID=$(blkid -o value -s PARTUUID "${OSD_DEVICE}"1)
-    umount /var/lib/ceph/osd-lockbox/"${DATA_UUID}" || true
-  elif [[ -n "${OSD_JOURNAL}" ]]; then
-    ceph-disk -v prepare "${CLI_OPTS[@]}" --filestore --journal-uuid "${OSD_JOURNAL_UUID}" "${OSD_DEVICE}" "${OSD_JOURNAL}"
-  else
-    ceph-disk -v prepare "${CLI_OPTS[@]}" --filestore --journal-uuid "${OSD_JOURNAL_UUID}" "${OSD_DEVICE}"
   fi
+
+  # unmount lockbox partition when using dmcrypt
+  umount_lockbox
 
   # watch the udev event queue, and exit if all current events are handled
   udevadm settle --timeout=600

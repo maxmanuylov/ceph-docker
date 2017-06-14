@@ -1,4 +1,5 @@
 #!/bin/bash
+# shellcheck disable=SC2034
 set -e
 
 function osd_activate {
@@ -16,7 +17,7 @@ function osd_activate {
   fi
   JOURNAL_PART=$(ceph-disk list "${CLI[@]}" | awk '/ceph journal/ {print $1}') # This is privileged container so 'ceph-disk list' works
   JOURNAL_UUID=$(get_part_uuid "${JOURNAL_PART}" || true)
-  LOCKBOX_UUID=$(get_part_uuid "${OSD_DEVICE}"3 || true)
+  LOCKBOX_UUID=$(get_part_uuid "${OSD_DEVICE}"5 || true)
 
   # watch the udev event queue, and exit if all current events are handled
   udevadm settle --timeout=600
@@ -25,6 +26,8 @@ function osd_activate {
   MOUNTED_PART=${DATA_PART}
 
   if [[ ${OSD_DMCRYPT} -eq 1 ]]; then
+    JOURNAL_PART=$(ceph-disk list "${OSD_DEVICE}" | awk '/ceph journal/ {print $1}') # This is privileged container so 'ceph-disk list' works , c'est un ACTIVATE DONC BNON
+    JOURNAL_UUID=$(get_part_uuid "${JOURNAL_PART}")
     log "Mounting LOCKBOX directory"
     # NOTE(leseb): adding || true so when this bug will be fixed the entrypoint will not fail
     # Ceph bug tracker: http://tracker.ceph.com/issues/18945

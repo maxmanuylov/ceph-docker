@@ -44,15 +44,7 @@ function osd_disk_prepare {
     fi
   fi
 
-  if [[ ${OSD_BLUESTORE} -eq 1 ]]; then
-    ceph-disk -v prepare "${CLI_OPTS[@]}" --bluestore \
-    --block.wal "${OSD_BLUESTORE_BLOCK_WAL}" \
-    --block.wal-uuid "${OSD_BLUESTORE_BLOCK_WAL_UUID}" \
-    --block.db "${OSD_BLUESTORE_BLOCK_DB}" \
-    --block.db-uuid "${OSD_BLUESTORE_BLOCK_DB_UUID}" \
-    --block-uuid "${OSD_BLUESTORE_BLOCK_UUID}" \
-    "${OSD_DEVICE}"
-  elif [[ ${OSD_DMCRYPT} -eq 1 ]]; then
+  if [[ ${OSD_DMCRYPT} -eq 1 ]]; then
     get_admin_key
     check_admin_key
     # the admin key must be present on the node
