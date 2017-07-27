@@ -104,6 +104,12 @@ function start_mon {
         ip_version=4
       fi
     fi
+    if [[ "$(echo "$CEPH_PUBLIC_NETWORK" | wc -l)" -ne 1 ]]; then
+      log "It seems that the interface ${nic_more_traffic} with most of the traffic has several subnets configured"
+      log "I don't know which one to use."
+      log "Please do not use NETWORK_AUTO_DETECT but specify which subnet you want to use for CEPH_PUBLIC_NETWORK"
+      exit 1
+    fi
   fi
 
   if [[ -z "$MON_IP" || -z "$CEPH_PUBLIC_NETWORK" ]]; then
