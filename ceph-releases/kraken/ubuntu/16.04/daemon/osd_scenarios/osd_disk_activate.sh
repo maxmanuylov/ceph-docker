@@ -35,7 +35,7 @@ function osd_activate {
 
   OSD_ID=$(grep "${MOUNTED_PART}" /proc/mounts | awk '{print $2}' | sed -r 's/^.*-([0-9]+)$/\1/')
   OSD_PATH=$(get_osd_path "$OSD_ID")
-  OSD_KEYRING="$OSD_PATH/keyring"
+  OSD_KEYRING="${OSD_PATH}keyring"
   if [[ ${OSD_BLUESTORE} -eq 1 ]] && [ -e "${OSD_PATH}block" ]; then
     OSD_WEIGHT=$(awk "BEGIN { d= $(blockdev --getsize64 "${OSD_PATH}"block)/1099511627776 ; r = sprintf(\"%.2f\", d); print r }")
   else
@@ -50,6 +50,11 @@ function osd_activate {
     OSD_BLUESTORE_BLOCK_WAL=${OSD_BLUESTORE_BLOCK_WAL_TMP%?}
   fi
   apply_ceph_ownership_to_disks
+
+  OSD_FSID="${OSD_PATH}fsid"
+  if [[ -e "${OSD_FSID}" ]]; then
+    ceph "${CLI_OPTS[@]}" osd create "$(cat "$OSD_FSID")" osd."${OSD_ID}"
+  fi
 
   ceph "${CLI_OPTS[@]}" --name=osd."${OSD_ID}" --keyring="$OSD_KEYRING" osd crush create-or-move -- "${OSD_ID}" "${OSD_WEIGHT}" "${CRUSH_LOCATION}"
 
