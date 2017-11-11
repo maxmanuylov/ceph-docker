@@ -13,6 +13,7 @@ ALL_SCENARIOS="populate_kvstore mon osd osd_directory osd_directory_single osd_c
 #########################
 
 : "${CLUSTER:=ceph}"
+: "${CLUSTER_ID:=$(uuidgen)}"
 : "${CLUSTER_PATH:=ceph-config/${CLUSTER}}" # For KV config
 : "${CEPH_CLUSTER_NETWORK:=${CEPH_PUBLIC_NETWORK}}"
 : "${CEPH_DAEMON:=${1}}" # default daemon to first argument

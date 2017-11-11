@@ -47,7 +47,7 @@ function get_mon_config {
     log "No configuration found for cluster ${CLUSTER}. Generating."
 
     local fsid
-    fsid=$(uuidgen)
+    fsid=${CLUSTER_ID}
     etcdctl "${ETCDCTL_OPTS[@]}" "${KV_TLS[@]}" set "${CLUSTER_PATH}"/auth/fsid "${fsid}"
 
     until confd -onetime -backend "${KV_TYPE}" -node "${CONFD_NODE_SCHEMA}""${KV_IP}":"${KV_PORT}" "${CONFD_KV_TLS[@]}" -prefix="/${CLUSTER_PATH}/"; do
